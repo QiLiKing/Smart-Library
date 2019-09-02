@@ -22,9 +22,17 @@ import io.realm.kotlin.removeChangeListener
  * LiveScope runs in a single thread, so mark its operations as async methods
  */
 internal interface ILiveScope {
-    fun <T : RealmModel> bindFirstAsync(clazz: Class<T>, listener: RealmChangeListener<T>, query: (RealmQuery<T>) -> RealmQuery<T>)
+    fun <T : RealmModel> bindFirstAsync(
+        clazz: Class<T>,
+        listener: RealmChangeListener<T>,
+        query: (RealmQuery<T>) -> RealmQuery<T>
+    )
 
-    fun <T : RealmModel> bindAllAsync(clazz: Class<T>, listener: RealmChangeListener<RealmResults<T>>, query: (RealmQuery<T>) -> RealmQuery<T>)
+    fun <T : RealmModel> bindAllAsync(
+        clazz: Class<T>,
+        listener: RealmChangeListener<RealmResults<T>>,
+        query: (RealmQuery<T>) -> RealmQuery<T>
+    )
 
     fun unbindAsync(listener: RealmChangeListener<*>)
 
@@ -41,9 +49,14 @@ internal object LiveScope : ILiveScope {
 
     private val activeDatas = ArrayList<ActiveData<*>>()
 
-    override fun <T : RealmModel> bindFirstAsync(clazz: Class<T>, listener: RealmChangeListener<T>, query: (RealmQuery<T>) -> RealmQuery<T>) {
+    override fun <T : RealmModel> bindFirstAsync(
+        clazz: Class<T>,
+        listener: RealmChangeListener<T>,
+        query: (RealmQuery<T>) -> RealmQuery<T>
+    ) {
         handler.post {
-            val t = reader.openTable(clazz).let { query(it.where(clazz)).findFirstAsync() } //If use findFirst(), you should notify the initial result manually.
+            val t = reader.openTable(clazz)
+                .let { query(it.where(clazz)).findFirstAsync() } //If use findFirst(), you should notify the initial result manually.
             if (t == null) {
                 reader.closeTable(clazz)
             } else {
@@ -52,7 +65,11 @@ internal object LiveScope : ILiveScope {
         }
     }
 
-    override fun <T : RealmModel> bindAllAsync(clazz: Class<T>, listener: RealmChangeListener<RealmResults<T>>, query: (RealmQuery<T>) -> RealmQuery<T>) {
+    override fun <T : RealmModel> bindAllAsync(
+        clazz: Class<T>,
+        listener: RealmChangeListener<RealmResults<T>>,
+        query: (RealmQuery<T>) -> RealmQuery<T>
+    ) {
         handler.post {
             val ts = reader.openTable(clazz).let { query(it.where(clazz)).findAllAsync() }
             if (ts != null) {

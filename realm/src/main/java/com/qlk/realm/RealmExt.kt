@@ -1,4 +1,4 @@
-@file:JvmName("RealmUtils")
+@file:JvmName("RealmHelper")
 
 package com.qlk.realm
 
@@ -29,9 +29,9 @@ fun <T : RealmModel> T?.handleByRealm(): Boolean {
 
 @UseExperimental(ExperimentalContracts::class)
 fun <T : RealmModel> List<T>?.handleByRealm(): Boolean {
-//    contract {
-//        returns(true) implies (this@listenable is RealmResults<T>)
-//    }
+    //    contract {
+    //        returns(true) implies (this@listenable is RealmResults<T>)
+    //    }
     contract {
         returns(true) implies (this@handleByRealm != null)
     }
@@ -99,7 +99,6 @@ private fun <T : RealmModel> RealmResults<T>.asLiveData(realm: Realm): LiveData<
 
     }
 }
-
 
 fun <T : RealmModel> RealmQuery<T>.include(field: String, vararg values: Int): RealmQuery<T> {
     if (values.isEmpty()) throw IllegalArgumentException("Nothing to include for filed:$field!")

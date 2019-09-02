@@ -58,9 +58,9 @@ interface IReadScope {
 
 interface IWriteScope {
 
-    fun updateOrInsert(model: RealmModel?)
+    fun insertOrUpdate(model: RealmModel?)
 
-    fun updateOrInsert(models: List<RealmModel>)
+    fun insertOrUpdate(models: List<RealmModel>)
 
     fun clearTable(table: Class<out RealmModel>)
 
@@ -158,14 +158,14 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
     //begin transaction by this scope, and should commit when completed.
     private val transactedRealms by lazy { HashSet<Realm>() }
 
-    override fun updateOrInsert(model: RealmModel?) {
+    override fun insertOrUpdate(model: RealmModel?) {
         if (model == null) return
         safeTransact(model.javaClass) {
             insertOrUpdate(model)
         }
     }
 
-    override fun updateOrInsert(models: List<RealmModel>) {
+    override fun insertOrUpdate(models: List<RealmModel>) {
         if (models.isEmpty()) return
         val clazz = models[0].javaClass
         safeTransact(clazz) {

@@ -12,7 +12,8 @@ import io.realm.RealmResults
  * Created by QiLiKing on 2019-07-28.
  */
 internal class CountRealmData<T : RealmModel>(
-    clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>,
+    clazz: Class<T>,
+    query: (RealmQuery<T>) -> RealmQuery<T>,
     differ: Differ<T>? = Differ<T>().ignoreDiffOps(DiffOp.Change, DiffOp.Move)
 ) : LiveData<Int>() {
 
