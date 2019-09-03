@@ -43,7 +43,7 @@ internal interface ILiveScope {
 
 internal object LiveScope : ILiveScope {
     //Executor + Looper.prepare() does not work.
-    private var executor: HandlerThread = HandlerThread("ActiveScope").also { it.start() }
+    private var executor: HandlerThread = HandlerThread("LiveScope").also { it.start() }
     private val handler = Handler(executor.looper)
     private val reader: ReadScopeImpl = ReadScopeImpl()
 
