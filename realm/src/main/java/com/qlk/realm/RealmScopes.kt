@@ -17,7 +17,7 @@ import kotlin.collections.HashMap
  * Created by QiLiKing on 2019-07-27.
  */
 
-private interface IRealmScope : Closeable {
+interface IRealmScope : Closeable {
     /**
      * make our operations be compatible with [Realm.getInstance] error.
      */
@@ -180,24 +180,27 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
     }
 
     override fun close() {
-        transactedRealms.forEach { it.tryCommit() }
-        transactedRealms.clear()
-        super.close()
+        try {
+            transactedRealms.forEach { it.tryCommit() }
+            transactedRealms.clear()
+        } finally {
+            super.close()
+        }
     }
 
     protected fun <R> safeTransact(clazz: Class<out RealmModel>, action: Realm.() -> R?): R? {
-        val realm = transact(clazz) ?: return null
+        val realm = transact(clazz)
         return try {
             action(realm)
         } catch (t: Throwable) {
             if (transactedRealms.contains(realm) && realm.isInTransaction) { //do not cancel outer transaction
                 realm.cancelTransaction()
             }
-            null
+            throw t
         }
     }
 
-    private fun transact(clazz: Class<out RealmModel>): Realm? {
+    private fun transact(clazz: Class<out RealmModel>): Realm {
         val realm = openTable(clazz)
         if (!realm.isInTransaction) {
             realm.beginTransaction()

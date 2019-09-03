@@ -64,17 +64,18 @@ fun <T : RealmModel> RealmResults<T>.tryBind(listener: RealmChangeListener<Realm
 
 //can't refresh inside a transaction, if has looper, it's better to use a RealmChangeListener instead of this method.(see document)
 fun Realm.tryRefresh() {
-    if (!isInTransaction && Looper.myLooper() == null) refresh()
+    if (!isClosed && !isInTransaction && Looper.myLooper() == null) refresh()
 }
 
 //Although we has invoked "beginTransaction", but the realm is not in transaction if we change nothing.
 fun Realm.tryCommit() {
-    if (isInTransaction) {
+    if (!isClosed && isInTransaction) {
         try {
             commitTransaction()
         } catch (t: Throwable) {
             t.printStackTrace()
             cancelTransaction()
+            throw t
         }
     }
 }

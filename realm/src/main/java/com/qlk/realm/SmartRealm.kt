@@ -25,6 +25,11 @@ internal val realmExecutor: ExecutorService by lazy { Executors.newFixedThreadPo
 internal val realmDispatcher: CoroutineDispatcher by lazy { realmExecutor.asCoroutineDispatcher() }
 
 /**
+ * I strongly recommend you using one of [SmartRealm], [SyncRealm], [AsyncRealm], [LiveRealm] instead of [AtomicRealm]
+ */
+class AtomicRealm : IRealmScope by RealmScopeImpl()
+
+/**
  * Realm operations which will run into your current thread.
  */
 object SmartRealm {
@@ -43,7 +48,8 @@ object SmartRealm {
     /* Extended Operations [UnManaged]. The following four methods will copy automatically, that means they are thread safe */
 
     @JvmStatic
-    fun <T : RealmModel> count(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): Long =
+    @JvmOverloads
+    fun <T : RealmModel> count(clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }): Long =
         read { count(clazz, query) } ?: 0
 
     @JvmStatic
@@ -56,16 +62,18 @@ object SmartRealm {
     ): R? = read { findFirst(clazz, query)?.transfer() }
 
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>)
+        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): List<T> = read { copyAll(findAll(clazz, query)) } ?: emptyList()
 
     /**
      * Remove the element if it is null after translation. So the results' elements are all nonnull.
      */
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel, R : Any> translateAll(
-        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>)
+        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): List<R> = read { findAll(clazz, query).mapNotNull(transfer) } ?: emptyList()
 
     /* for Java */
@@ -117,7 +125,8 @@ object SyncRealm {
     /* Extended Operations [UnManaged]. The following four methods will copy automatically, that means they are thread safe */
 
     @JvmStatic
-    fun <T : RealmModel> count(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): Long =
+    @JvmOverloads
+    fun <T : RealmModel> count(clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }): Long =
         runBlocking(realmDispatcher) { SmartRealm.count(clazz, query) }
 
     @JvmStatic
@@ -130,13 +139,15 @@ object SyncRealm {
     ): R? = runBlocking(realmDispatcher) { SmartRealm.translateFirst(clazz, transfer, query) }
 
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>)
+        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): List<T> = runBlocking(realmDispatcher) { SmartRealm.findAll(clazz, query) }
 
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel, R : Any> translateAll(
-        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>)
+        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): List<R> = runBlocking(realmDispatcher) { SmartRealm.translateAll(clazz, transfer, query) }
 
     /* for Java */
@@ -167,8 +178,9 @@ object AsyncRealm {
         submit { SmartRealm.readWrite(action) }
 
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel> count(
-        clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>
+        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): FutureTracker<Long> = submit { SmartRealm.count(clazz, query) }
 
     @JvmStatic
@@ -182,13 +194,15 @@ object AsyncRealm {
     ): FutureTracker<R> = submit { SmartRealm.translateFirst(clazz, transfer, query) }
 
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>
+        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): FutureTracker<List<T>> = submit { SmartRealm.findAll(clazz, query) }
 
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel, R : Any> translateAll(
-        clazz: Class<T>, transfer: T.() -> R?, query: (RealmQuery<T>) -> RealmQuery<T>
+        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): FutureTracker<List<R>> = submit { SmartRealm.translateAll(clazz, transfer, query) }
 
     /* for Java */
@@ -216,15 +230,15 @@ object AsyncRealm {
 
 object LiveRealm {
     @JvmStatic
+    @JvmOverloads
     fun <T : RealmModel> count(
         clazz: Class<T>,
         differ: Differ<T>? = null,
-        query: (RealmQuery<T>) -> RealmQuery<T>
+        query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): LiveData<Int> =
         CountRealmData(clazz, query, differ)
 
     @JvmStatic
-    @JvmOverloads
     fun <T : RealmModel> findFirst(
         clazz: Class<T>,
         differ: Differ<T>? = null,
@@ -233,7 +247,6 @@ object LiveRealm {
         FirstRealmData(clazz, query, differ)
 
     @JvmStatic
-    @JvmOverloads
     fun <T : RealmModel, R : Any> translateFirst(
         clazz: Class<T>,
         transfer: T.() -> R?,
@@ -244,7 +257,9 @@ object LiveRealm {
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, differ: Differ<T>? = null, query: (RealmQuery<T>) -> RealmQuery<T>
+        clazz: Class<T>,
+        differ: Differ<T>? = null,
+        query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): LiveData<List<T>> = MultiRealmData(clazz, query, differ)
 
     @JvmStatic
@@ -253,7 +268,7 @@ object LiveRealm {
         clazz: Class<T>,
         transfer: T.() -> R,
         differ: Differ<R>? = null,
-        query: (RealmQuery<T>) -> RealmQuery<T>
+        query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): LiveData<List<R>> = MultiRealmTransferData(clazz, query, transfer, differ)
 }
 
