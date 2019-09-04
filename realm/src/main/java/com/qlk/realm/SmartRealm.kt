@@ -49,23 +49,30 @@ object SmartRealm {
 
     @JvmStatic
     @JvmOverloads
-    fun <T : RealmModel> count(clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }): Long =
-        read { count(clazz, query) } ?: 0
+    fun <T : RealmModel> count(
+        clazz: Class<T>,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): Long = read { builder(query(clazz)).count() }
+        ?: 0
 
     @JvmStatic
-    fun <T : RealmModel> findFirst(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): T? =
-        read { copy(findFirst(clazz, query)) }
+    fun <T : RealmModel> findFirst(clazz: Class<T>, builder: (RealmQuery<T>) -> RealmQuery<T>): T? =
+        read { copy(builder(query(clazz)).findFirst()) }
 
     @JvmStatic
     fun <T : RealmModel, R : Any> translateFirst(
-        clazz: Class<T>, transfer: T.() -> R?, query: (RealmQuery<T>) -> RealmQuery<T>
-    ): R? = read { findFirst(clazz, query)?.transfer() }
+        clazz: Class<T>,
+        transfer: T.() -> R?,
+        builder: (RealmQuery<T>) -> RealmQuery<T>
+    ): R? = read { findFirst(clazz, builder)?.transfer() }
 
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<T> = read { copyAll(findAll(clazz, query)) } ?: emptyList()
+        clazz: Class<T>,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): List<T> = read { builder(query(clazz)).findAll() }
+        ?: emptyList()
 
     /**
      * Remove the element if it is null after translation. So the results' elements are all nonnull.
@@ -73,8 +80,21 @@ object SmartRealm {
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel, R : Any> translateAll(
-        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<R> = read { findAll(clazz, query).mapNotNull(transfer) } ?: emptyList()
+        clazz: Class<T>,
+        transfer: T.() -> R?,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): List<R> = read { findAll(clazz, builder).mapNotNull(transfer) }
+        ?: emptyList()
+
+    @JvmStatic
+    fun insertOrUpdate(model: RealmModel) {
+        write { insertOrUpdate(model) }
+    }
+
+    @JvmStatic
+    fun insertOrUpdate(models: List<RealmModel>) {
+        write { insertOrUpdate(models) }
+    }
 
     /* for Java */
 
@@ -126,29 +146,46 @@ object SyncRealm {
 
     @JvmStatic
     @JvmOverloads
-    fun <T : RealmModel> count(clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }): Long =
-        runBlocking(realmDispatcher) { SmartRealm.count(clazz, query) }
+    fun <T : RealmModel> count(
+        clazz: Class<T>,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): Long = runBlocking(realmDispatcher) { SmartRealm.count(clazz, builder) }
 
     @JvmStatic
-    fun <T : RealmModel> findFirst(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): T? =
-        runBlocking(realmDispatcher) { SmartRealm.findFirst(clazz, query) }
+    fun <T : RealmModel> findFirst(clazz: Class<T>, builder: (RealmQuery<T>) -> RealmQuery<T>): T? =
+        runBlocking(realmDispatcher) { SmartRealm.findFirst(clazz, builder) }
 
     @JvmStatic
     fun <T : RealmModel, R : Any> translateFirst(
-        clazz: Class<T>, transfer: T.() -> R?, query: (RealmQuery<T>) -> RealmQuery<T>
-    ): R? = runBlocking(realmDispatcher) { SmartRealm.translateFirst(clazz, transfer, query) }
+        clazz: Class<T>,
+        transfer: T.() -> R?,
+        builder: (RealmQuery<T>) -> RealmQuery<T>
+    ): R? = runBlocking(realmDispatcher) { SmartRealm.translateFirst(clazz, transfer, builder) }
 
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<T> = runBlocking(realmDispatcher) { SmartRealm.findAll(clazz, query) }
+        clazz: Class<T>,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): List<T> = runBlocking(realmDispatcher) { SmartRealm.findAll(clazz, builder) }
 
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel, R : Any> translateAll(
-        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<R> = runBlocking(realmDispatcher) { SmartRealm.translateAll(clazz, transfer, query) }
+        clazz: Class<T>,
+        transfer: T.() -> R?,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): List<R> = runBlocking(realmDispatcher) { SmartRealm.translateAll(clazz, transfer, builder) }
+
+    @JvmStatic
+    fun insertOrUpdate(model: RealmModel) {
+        runBlocking(realmDispatcher) { SmartRealm.write { insertOrUpdate(model) } }
+    }
+
+    @JvmStatic
+    fun insertOrUpdate(models: List<RealmModel>) {
+        runBlocking(realmDispatcher) { SmartRealm.write { insertOrUpdate(models) } }
+    }
 
     /* for Java */
 
@@ -180,30 +217,45 @@ object AsyncRealm {
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel> count(
-        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): FutureTracker<Long> = submit { SmartRealm.count(clazz, query) }
+        clazz: Class<T>,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): FutureTracker<Long> = submit { SmartRealm.count(clazz, builder) }
 
     @JvmStatic
     fun <T : RealmModel> findFirst(
-        clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>
-    ): FutureTracker<T> = submit { SmartRealm.findFirst(clazz, query) }
+        clazz: Class<T>,
+        builder: (RealmQuery<T>) -> RealmQuery<T>
+    ): FutureTracker<T> = submit { SmartRealm.findFirst(clazz, builder) }
 
     @JvmStatic
     fun <T : RealmModel, R : Any> translateFirst(
-        clazz: Class<T>, transfer: T.() -> R?, query: (RealmQuery<T>) -> RealmQuery<T>
-    ): FutureTracker<R> = submit { SmartRealm.translateFirst(clazz, transfer, query) }
+        clazz: Class<T>,
+        transfer: T.() -> R?,
+        builder: (RealmQuery<T>) -> RealmQuery<T>
+    ): FutureTracker<R> = submit { SmartRealm.translateFirst(clazz, transfer, builder) }
 
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel> findAll(
-        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): FutureTracker<List<T>> = submit { SmartRealm.findAll(clazz, query) }
+        clazz: Class<T>,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): FutureTracker<List<T>> = submit { SmartRealm.findAll(clazz, builder) }
 
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel, R : Any> translateAll(
-        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): FutureTracker<List<R>> = submit { SmartRealm.translateAll(clazz, transfer, query) }
+        clazz: Class<T>,
+        transfer: T.() -> R?,
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): FutureTracker<List<R>> = submit { SmartRealm.translateAll(clazz, transfer, builder) }
+
+    @JvmStatic
+    fun insertOrUpdate(model: RealmModel): FutureTracker<Unit> =
+        submit { SmartRealm.insertOrUpdate(model) }
+
+    @JvmStatic
+    fun insertOrUpdate(models: List<RealmModel>): FutureTracker<Unit> =
+        submit { SmartRealm.insertOrUpdate(models) }
 
     /* for Java */
     @JvmStatic
@@ -220,8 +272,7 @@ object AsyncRealm {
 
     private fun <T> submit(action: () -> T?): FutureTracker<T> = FutureTracker<T>().apply {
         setJob(realmExecutor.submit job@{
-            kotlin.runCatching { action() }
-                .onSuccess { success(it) }
+            kotlin.runCatching { action() }.onSuccess { success(it) }
                 .onFailure { failure(Reason().withException(it)) }
         })
     }
@@ -234,33 +285,31 @@ object LiveRealm {
     fun <T : RealmModel> count(
         clazz: Class<T>,
         differ: Differ<T>? = null,
-        query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): LiveData<Int> =
-        CountRealmData(clazz, query, differ)
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): LiveData<Int> = CountRealmData(clazz, builder, differ)
 
     @JvmStatic
     fun <T : RealmModel> findFirst(
         clazz: Class<T>,
         differ: Differ<T>? = null,
-        query: (RealmQuery<T>) -> RealmQuery<T>
-    ): LiveData<T> =
-        FirstRealmData(clazz, query, differ)
+        builder: (RealmQuery<T>) -> RealmQuery<T>
+    ): LiveData<T> = FirstRealmData(clazz, builder, differ)
 
     @JvmStatic
     fun <T : RealmModel, R : Any> translateFirst(
         clazz: Class<T>,
         transfer: T.() -> R?,
         differ: Differ<R>? = null,
-        query: (RealmQuery<T>) -> RealmQuery<T>
-    ): LiveData<R> = FirstRealmTransferData(clazz, query, transfer, differ)
+        builder: (RealmQuery<T>) -> RealmQuery<T>
+    ): LiveData<R> = FirstRealmTransferData(clazz, builder, transfer, differ)
 
     @JvmStatic
     @JvmOverloads
     fun <T : RealmModel> findAll(
         clazz: Class<T>,
         differ: Differ<T>? = null,
-        query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): LiveData<List<T>> = MultiRealmData(clazz, query, differ)
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): LiveData<List<T>> = MultiRealmData(clazz, builder, differ)
 
     @JvmStatic
     @JvmOverloads
@@ -268,8 +317,8 @@ object LiveRealm {
         clazz: Class<T>,
         transfer: T.() -> R,
         differ: Differ<R>? = null,
-        query: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): LiveData<List<R>> = MultiRealmTransferData(clazz, query, transfer, differ)
+        builder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
+    ): LiveData<List<R>> = MultiRealmTransferData(clazz, builder, transfer, differ)
 }
 
 //interface IRealmOperation {
@@ -280,20 +329,20 @@ object LiveRealm {
 //
 //    fun <T> readWrite(action: IReadWriteScope.() -> T?): T?
 //
-//    fun <T : RealmModel> count(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): Long
+//    fun <T : RealmModel> count(clazz: Class<T>, builder: (RealmQuery<T>) -> RealmQuery<T>): Long
 //
-//    fun <T : RealmModel> findFirst(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): T?
+//    fun <T : RealmModel> findFirst(clazz: Class<T>, builder: (RealmQuery<T>) -> RealmQuery<T>): T?
 //
 //    fun <T : RealmModel, R : Any> translateFirst(
-//        clazz: Class<T>, transfer: T.() -> R?, query: (RealmQuery<T>) -> RealmQuery<T>
+//        clazz: Class<T>, transfer: T.() -> R?, builder: (RealmQuery<T>) -> RealmQuery<T>
 //    ): R?
 //
 //    fun <T : RealmModel> findAll(
-//        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>)
+//        clazz: Class<T>, builder: ((RealmQuery<T>) -> RealmQuery<T>)
 //    ): List<T>
 //
 //    fun <T : RealmModel, R : Any> translateAll(
-//        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>)
+//        clazz: Class<T>, transfer: T.() -> R?, builder: ((RealmQuery<T>) -> RealmQuery<T>)
 //    ): List<R>
 //
 //    /* for Java */
@@ -314,23 +363,23 @@ object LiveRealm {
 //    fun <T> readWrite(action: IReadWriteScope.() -> T?): FutureTracker<T>
 //
 //    fun <T : RealmModel> count(
-//        clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>
+//        clazz: Class<T>, builder: (RealmQuery<T>) -> RealmQuery<T>
 //    ): FutureTracker<Long>
 //
 //    fun <T : RealmModel> findFirst(
-//        clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>
+//        clazz: Class<T>, builder: (RealmQuery<T>) -> RealmQuery<T>
 //    ): FutureTracker<T>
 //
 //    fun <T : RealmModel, R : Any> translateFirst(
-//        clazz: Class<T>, transfer: T.() -> R?, query: (RealmQuery<T>) -> RealmQuery<T>
+//        clazz: Class<T>, transfer: T.() -> R?, builder: (RealmQuery<T>) -> RealmQuery<T>
 //    ): FutureTracker<R>
 //
 //    fun <T : RealmModel> findAll(
-//        clazz: Class<T>, query: ((RealmQuery<T>) -> RealmQuery<T>)
+//        clazz: Class<T>, builder: ((RealmQuery<T>) -> RealmQuery<T>)
 //    ): FutureTracker<List<T>>
 //
 //    fun <T : RealmModel, R : Any> translateAll(
-//        clazz: Class<T>, transfer: T.() -> R?, query: ((RealmQuery<T>) -> RealmQuery<T>)
+//        clazz: Class<T>, transfer: T.() -> R?, builder: ((RealmQuery<T>) -> RealmQuery<T>)
 //    ): FutureTracker<List<R>>
 //
 //    /* for Java */

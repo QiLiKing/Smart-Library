@@ -32,16 +32,8 @@ interface IRealmScope : Closeable {
  * If you want to use the result outside, must call [IReadScope.copy] or [IReadScope.copyAll]
  */
 interface IReadScope {
-    fun <T : RealmModel> findFirst(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): T?
 
-    /**
-     * Because we allow a null [Realm] instance through [IRealmScope.openTable] and can't create an empty [RealmResults], so I have to change the return value as [List]
-     */
-    fun <T : RealmModel> findAll(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): RealmResults<T>
-
-    fun <T : RealmModel> count(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): Long
-
-    /* Cannot use model.javaClass to infer the table type, it is a proxy class like "com_easilydo_mail_models_EdoAccountRealmProxy". o(╥﹏╥)o */
+    fun <T : RealmModel> query(clazz: Class<T>): RealmQuery<T>
 
     /**
      * @return null if [model] is not a managed and valid [RealmModel]
@@ -86,7 +78,7 @@ internal open class RealmScopeImpl : IRealmScope {
 
     override fun openTable(table: Class<out RealmModel>): Realm {
         return openedRealms[table]?.takeUnless { it.isClosed } //outer close abnormally
-               ?: SmartRealm.getRealmFactory().open(table).also { openedRealms[table] = it }
+            ?: SmartRealm.getRealmFactory().open(table).also { openedRealms[table] = it }
     }
 
     /**
@@ -99,16 +91,10 @@ internal open class RealmScopeImpl : IRealmScope {
 
 internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
 
-    override fun <T : RealmModel> findFirst(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): T? {
-        return openTable(clazz).let { it.tryRefresh(); query(it.where(clazz)).findFirst() }
-    }
-
-    override fun <T : RealmModel> findAll(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): RealmResults<T> {
-        return openTable(clazz).let { it.tryRefresh(); query(it.where(clazz)).findAll() }
-    }
-
-    override fun <T : RealmModel> count(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): Long {
-        return openTable(clazz).let { it.tryRefresh(); query(it.where(clazz)).count() }
+    override fun <T : RealmModel> query(clazz: Class<T>): RealmQuery<T> {
+        val realm = openTable(clazz)
+        realm.tryRefresh()
+        return realm.where(clazz)
     }
 
     override fun <T : RealmModel> copy(model: T?): T? {
@@ -117,7 +103,10 @@ internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
         }
         if (model.handleByRealm()) {
             val clazz = model.tableClass
-            return openTable(clazz).copyFromRealm(model, SmartRealm.getRealmFactory().getCopyDeep(clazz))
+            return openTable(clazz).copyFromRealm(
+                model,
+                SmartRealm.getRealmFactory().getCopyDeep(clazz)
+            )
         }
         return null
     }
@@ -130,7 +119,10 @@ internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
             return models.mapNotNull { (it as? IFastCopy<T>)?.fastCopy() }
         }
         val clazz = models.tableClass() ?: return emptyList()
-        return openTable(clazz).copyFromRealm(models, SmartRealm.getRealmFactory().getCopyDeep(clazz))
+        return openTable(clazz).copyFromRealm(
+            models,
+            SmartRealm.getRealmFactory().getCopyDeep(clazz)
+        )
     }
 }
 
@@ -196,17 +188,11 @@ internal class ReadWriteScopeImpl : WriteScopeImpl(), IReadWriteScope {
 
     private val reader by lazy { ReadScopeImpl() }
 
+    override fun <T : RealmModel> query(clazz: Class<T>): RealmQuery<T> {
+        return safeTransact(clazz) { reader.query(clazz) }
+    }
+
     /* beginTransaction will refresh data first, so we needn't invoke again. */
-
-    override fun <T : RealmModel> findFirst(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): T? {
-        return safeTransact(clazz) { reader.findFirst(clazz, query) }
-    }
-
-    override fun <T : RealmModel> findAll(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): RealmResults<T> {
-        return safeTransact(clazz) { reader.findAll(clazz, query) }
-    }
-
-    override fun <T : RealmModel> count(clazz: Class<T>, query: (RealmQuery<T>) -> RealmQuery<T>): Long = safeTransact(clazz) { reader.count(clazz, query) }
 
     override fun <T : RealmModel> copy(model: T?): T? = reader.copy(model)
 
