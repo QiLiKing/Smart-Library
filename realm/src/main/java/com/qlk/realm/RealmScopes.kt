@@ -56,6 +56,10 @@ interface IWriteScope {
 
     fun deleteTable(table: Class<out RealmModel>)
 
+    /**
+     * It will be called at end automatically if you not do this.
+     */
+    fun commitTransaction();
 }
 
 /**
@@ -152,10 +156,26 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
         }
     }
 
+    override fun commitTransaction() {
+        try {
+            transactedRealms.forEach {
+                it.tryCommit()
+            }
+        } catch (t: Throwable) {
+            transactedRealms.forEach {
+                if (!it.isClosed && it.isInTransaction) {
+                    it.cancelTransaction()
+                }
+            }
+            throw t
+        } finally {
+            transactedRealms.clear()
+        }
+    }
+
     override fun close() {
         try {
-            transactedRealms.forEach { it.tryCommit() }
-            transactedRealms.clear()
+            commitTransaction()
         } finally {
             super.close()
         }
@@ -196,7 +216,8 @@ internal class ReadWriteScopeImpl : WriteScopeImpl(), IReadWriteScope {
 
     override fun <T : RealmModel> copy(model: T?): T? = reader.copy(model)
 
-    override fun <T : RealmModel> copyAll(models: RealmResults<T>): List<T> = reader.copyAll(models)
+    override fun <T : RealmModel> copyAll(models: RealmResults<T>): List<T> =
+        reader.copyAll(models)
 
     override fun close() {
         if (this::reader.isInitialized) { //maybe never use any read operation
