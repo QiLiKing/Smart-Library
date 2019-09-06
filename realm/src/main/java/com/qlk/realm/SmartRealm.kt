@@ -130,6 +130,12 @@ object SmartRealm {
     @JvmStatic
     fun readWriteVoid(action: Executable<IReadWriteScope>) = readWrite { action.execute(this) }!!
 
+    @JvmStatic
+    fun <T : RealmModel> updateEachVoid(
+        clazz: Class<T>,
+        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+        updater: Executable<T>
+    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
 
     internal var threadPoolSize: Int = 2
     private lateinit var factory: IRealmFactory
@@ -238,6 +244,13 @@ object SyncRealm {
     @JvmStatic
     fun readWriteVoid(action: Executable<IReadWriteScope>) =
         runBlocking(realmDispatcher) { SmartRealm.readWriteVoid(action) }
+
+    @JvmStatic
+    fun <T : RealmModel> updateEachVoid(
+        clazz: Class<T>,
+        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+        updater: Executable<T>
+    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
 }
 
 object AsyncRealm {
@@ -317,6 +330,13 @@ object AsyncRealm {
     @JvmStatic
     fun readWriteVoid(action: Executable<IReadWriteScope>): FutureTracker<Unit> =
         submit { SmartRealm.readWriteVoid(action) }
+
+    @JvmStatic
+    fun <T : RealmModel> updateEachVoid(
+        clazz: Class<T>,
+        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+        updater: Executable<T>
+    ): FutureTracker<Int> = updateEach(clazz, queryBuilder) { updater.execute(this) }
 
     private fun <T> submit(action: () -> T?): FutureTracker<T> = FutureTracker<T>().apply {
         setJob(realmExecutor.submit job@{
