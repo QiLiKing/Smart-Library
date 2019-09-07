@@ -98,26 +98,26 @@ object SmartRealm {
     fun insertOrUpdate(models: List<RealmModel>) {
         write { insertOrUpdate(models) }
     }
-
-    /**
-     * updated model count
-     */
-    @JvmStatic
-    fun <T : RealmModel> updateEach(
-        clazz: Class<T>,
-        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
-        updater: T.() -> Unit
-    ): Int {
-        return readWrite {
-            val results = queryBuilder(query(clazz)).findAll()
-            var count = 0
-            results.forEach {
-                updater(it)
-                count++
-            }
-            return@readWrite count
-        } ?: 0
-    }
+// I think it's not a good idead to offer a update method. And It is hard to use.
+//    /**
+//     * updated model count
+//     */
+//    @JvmStatic
+//    fun <T : RealmModel> updateEach(
+//        clazz: Class<T>,
+//        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+//        updater: T.() -> Unit
+//    ): Int {
+//        return readWrite {
+//            val results = queryBuilder(query(clazz)).findAll()
+//            var count = 0
+//            results.forEach {
+//                updater(it)
+//                count++
+//            }
+//            return@readWrite count
+//        } ?: 0
+//    }
 
     /* for Java */
 
@@ -130,12 +130,12 @@ object SmartRealm {
     @JvmStatic
     fun readWriteVoid(action: Executable<IReadWriteScope>) = readWrite { action.execute(this) }!!
 
-    @JvmStatic
-    fun <T : RealmModel> updateEachVoid(
-        clazz: Class<T>,
-        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
-        updater: Executable<T>
-    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
+//    @JvmStatic
+//    fun <T : RealmModel> updateEachVoid(
+//        clazz: Class<T>,
+//        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+//        updater: Executable<T>
+//    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
 
     internal var threadPoolSize: Int = 2
     private lateinit var factory: IRealmFactory
@@ -221,15 +221,15 @@ object SyncRealm {
         runBlocking(realmDispatcher) { SmartRealm.write { insertOrUpdate(models) } }
     }
 
-    /**
-     * updated model count
-     */
-    @JvmStatic
-    fun <T : RealmModel> updateEach(
-        clazz: Class<T>,
-        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
-        updater: T.() -> Unit
-    ): Int = runBlocking(realmDispatcher) { SmartRealm.updateEach(clazz, queryBuilder, updater) }
+//    /**
+//     * updated model count
+//     */
+//    @JvmStatic
+//    fun <T : RealmModel> updateEach(
+//        clazz: Class<T>,
+//        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+//        updater: T.() -> Unit
+//    ): Int = runBlocking(realmDispatcher) { SmartRealm.updateEach(clazz, queryBuilder, updater) }
 
     /* for Java */
 
@@ -245,12 +245,12 @@ object SyncRealm {
     fun readWriteVoid(action: Executable<IReadWriteScope>) =
         runBlocking(realmDispatcher) { SmartRealm.readWriteVoid(action) }
 
-    @JvmStatic
-    fun <T : RealmModel> updateEachVoid(
-        clazz: Class<T>,
-        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
-        updater: Executable<T>
-    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
+//    @JvmStatic
+//    fun <T : RealmModel> updateEachVoid(
+//        clazz: Class<T>,
+//        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+//        updater: Executable<T>
+//    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
 }
 
 object AsyncRealm {
@@ -308,15 +308,15 @@ object AsyncRealm {
     fun insertOrUpdate(models: List<RealmModel>): FutureTracker<Unit> =
         submit { SmartRealm.insertOrUpdate(models) }
 
-    /**
-     * updated model count
-     */
-    @JvmStatic
-    fun <T : RealmModel> updateEach(
-        clazz: Class<T>,
-        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
-        updater: T.() -> Unit
-    ): FutureTracker<Int> = submit { SmartRealm.updateEach(clazz, queryBuilder, updater) }
+//    /**
+//     * updated model count
+//     */
+//    @JvmStatic
+//    fun <T : RealmModel> updateEach(
+//        clazz: Class<T>,
+//        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+//        updater: T.() -> Unit
+//    ): FutureTracker<Int> = submit { SmartRealm.updateEach(clazz, queryBuilder, updater) }
 
     /* for Java */
     @JvmStatic
@@ -331,12 +331,12 @@ object AsyncRealm {
     fun readWriteVoid(action: Executable<IReadWriteScope>): FutureTracker<Unit> =
         submit { SmartRealm.readWriteVoid(action) }
 
-    @JvmStatic
-    fun <T : RealmModel> updateEachVoid(
-        clazz: Class<T>,
-        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
-        updater: Executable<T>
-    ): FutureTracker<Int> = updateEach(clazz, queryBuilder) { updater.execute(this) }
+//    @JvmStatic
+//    fun <T : RealmModel> updateEachVoid(
+//        clazz: Class<T>,
+//        queryBuilder: (RealmQuery<T>) -> RealmQuery<T>,
+//        updater: Executable<T>
+//    ): FutureTracker<Int> = updateEach(clazz, queryBuilder) { updater.execute(this) }
 
     private fun <T> submit(action: () -> T?): FutureTracker<T> = FutureTracker<T>().apply {
         setJob(realmExecutor.submit job@{
