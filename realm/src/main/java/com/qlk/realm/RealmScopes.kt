@@ -54,6 +54,12 @@ interface IWriteScope {
 
     fun insertOrUpdate(models: List<RealmModel>)
 
+    /**
+     * @return the new or updated RealmObject with all its properties backed by the Realm.
+     *          You can change its values without caring transaction.
+     */
+    fun <T : RealmModel> copyToRealmOrUpdate(model: T): T
+
     fun deleteTable(table: Class<out RealmModel>)
 
     /**
@@ -148,6 +154,10 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
         safeTransact(clazz) {
             insertOrUpdate(models)
         }
+    }
+
+    override fun <T : RealmModel> copyToRealmOrUpdate(model: T): T = safeTransact(model.javaClass) {
+        copyToRealmOrUpdate(model)
     }
 
     override fun deleteTable(table: Class<out RealmModel>) {
