@@ -14,7 +14,7 @@ import java.util.concurrent.Future
  * QQ：1055329812<br/>
  * Created by QiLiKing on 2019-07-18 17:49
  */
-sealed class Result<out T>(protected var value: Any? = null) : Cacheable {
+sealed class Result<T>(protected var value: Any? = null) : Cacheable {
 
     @Suppress("UNCHECKED_CAST")
     fun getOrNull(): T? = when {
@@ -34,11 +34,19 @@ sealed class Result<out T>(protected var value: Any? = null) : Cacheable {
         return this
     }
 
+    open fun onSuccessVoid(executable: Executable<T>): Result<T> {
+        return onSuccess { executable.execute(it) }
+    }
+
     open fun onFailure(action: (Reason?) -> Unit): Result<T> {
         if (!successful) {
             action(getReasonOrNull())
         }
         return this
+    }
+
+    open fun onFailureVoid(executable: Executable<Reason>): Result<T> {
+        return onFailure { executable.execute(it) }
     }
 
     override fun byteCodes(): ByteSize = 1
@@ -61,7 +69,7 @@ sealed class Result<out T>(protected var value: Any? = null) : Cacheable {
 
 class Failure<T>(reason: Reason? = null) : Result<T>(reason)
 
-class Success<out T>(value: T? = null) : Result<T>(value)
+class Success<T>(value: T? = null) : Result<T>(value)
 
 open class MutableResult<T> : Result<T>() {
     private var success: Boolean? = null
@@ -118,17 +126,33 @@ open class MutableResult<T> : Result<T>() {
         return this
     }
 
+    fun whenSuccessVoid(executable: Executable<T>): MutableResult<T> {
+        return whenSuccess { executable.execute(it) }
+    }
+
     fun whenFailure(action: (Reason?) -> Unit): MutableResult<T> {
         this.whenFailure = action
         return this
     }
 
-    @Deprecated("Should use whenSuccess instead.", ReplaceWith("whenSuccess"), DeprecationLevel.ERROR)
+    fun whenFailureVoid(executable: Executable<Reason>): MutableResult<T> {
+        return whenFailure { executable.execute(it) }
+    }
+
+    @Deprecated(
+        "Should use whenSuccess instead.",
+        ReplaceWith("whenSuccess"),
+        DeprecationLevel.ERROR
+    )
     override fun onSuccess(action: (T?) -> Unit): Result<T> {
         return super.onSuccess(action)
     }
 
-    @Deprecated("Should use whenFailure instead.", ReplaceWith("whenFailure"), DeprecationLevel.ERROR)
+    @Deprecated(
+        "Should use whenFailure instead.",
+        ReplaceWith("whenFailure"),
+        DeprecationLevel.ERROR
+    )
     override fun onFailure(action: (Reason?) -> Unit): Result<T> {
         return super.onFailure(action)
     }

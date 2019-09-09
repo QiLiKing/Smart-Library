@@ -4,7 +4,6 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 apply plugin: 'realm-android'
-apply plugin: 'com.novoda.bintray-release'
 
 def safeExtGet(prop, fallback) {
     rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
@@ -49,15 +48,16 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
-    implementation 'com.qlk.lib:smart-core:0.0.2'
+    implementation 'com.qlk.lib:smart-core:0.0.3'
 }
 
+apply plugin: 'com.novoda.bintray-release'
 publish {
 //    repoName = 'WinfoSdk'//不指明，默认是上传到maven,指明的话这里的名字需要和你创建的仓库的名字一样
     userOrg = 'qiliking'//bintray.com你的用户名
     groupId = 'com.qlk.lib'//jcenter上的路径
     artifactId = 'smart-realm'//项目名称
-    publishVersion = '0.1.7'//版本号
+    publishVersion = '0.1.8'//版本号
     desc = 'my first module'//描述，不重要
     website = 'https://github.com/qlk'//网站，不重要；尽量模拟github上的地址，例如我这样的；当然你有地址最好了
 }
