@@ -73,7 +73,16 @@ interface IWriteScope {
  *
  * see the document of BaseRealm#beginTransaction
  */
-interface IReadWriteScope : IReadScope, IWriteScope
+interface IReadWriteScope : IReadScope, IWriteScope {
+    /**
+     * Realm document suggests us that:"It is therefore recommended to query for the items that should be modified from inside the transaction".
+     * So I invoke "beginTransaction" automatically when you try to read something.
+     * If you do NOT want to do so, set "auto" false.
+     * @see Realm.beginTransaction
+     * @param auto default true.
+     */
+    fun autoTransactionWhenQuery(auto: Boolean = true)
+}
 
 internal open class RealmScopeImpl : IRealmScope {
 
@@ -215,11 +224,20 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
 }
 
 internal class ReadWriteScopeImpl : WriteScopeImpl(), IReadWriteScope {
+    private var autoTransaction: Boolean = true
 
     private val reader by lazy { ReadScopeImpl() }
 
+    override fun autoTransactionWhenQuery(auto: Boolean) {
+        this.autoTransaction = auto
+    }
+
     override fun <T : RealmModel> query(clazz: Class<T>): RealmQuery<T> {
-        return safeTransact(clazz) { reader.query(clazz) }
+        return if (autoTransaction) {
+            safeTransact(clazz) { reader.query(clazz) }
+        } else {
+            reader.query(clazz)
+        }
     }
 
     /* beginTransaction will refresh data first, so we needn't invoke again. */
