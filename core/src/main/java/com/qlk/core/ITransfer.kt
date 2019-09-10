@@ -5,5 +5,5 @@ package com.qlk.core
  * Created by QiLiKing on 2019-09-11.
  */
 interface ITransfer<T, R> {
-    fun translate(t: T?): R?
+    fun translate(t: T): R?
 }
