@@ -74,7 +74,7 @@ object SmartRealm {
     fun <T : RealmModel> findAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<T> = read { queryBuilder(query(clazz)).findAll() }
+    ): List<T> = read { copyAll(queryBuilder(query(clazz)).findAll()) }
         ?: emptyList()
 
     /**
