@@ -31,13 +31,13 @@ internal open class MultiRealmData<T : RealmModel>(
 
     override fun onChange(ts: RealmResults<T>) {
         if (isInDebugMode) println("MultiRealmData#onChange()-> $ts")
-        LiveScope.copyAllAsync(ts).whenSuccess {
+        LiveScope.copyAllAsync(ts).onSuccess {
             if (value != null && differ?.different(
                     value!!,
                     ts,
                     differ.ignoreOps
                 ) == false
-            ) return@whenSuccess
+            ) return@onSuccess
             postValue(it)
         }
     }

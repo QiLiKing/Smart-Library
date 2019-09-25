@@ -73,9 +73,9 @@ class Success<T>(value: T? = null) : Result<T>(value)
 
 open class MutableResult<T> : Result<T>() {
     private var success: Boolean? = null
-    private var whenComplete: (() -> Unit)? = null
-    private var whenSuccess: ((T?) -> Unit)? = null
-    private var whenFailure: ((Reason?) -> Unit)? = null
+    private var onComplete: (() -> Unit)? = null
+    private var onSuccess: ((T?) -> Unit)? = null
+    private var onFailure: ((Reason?) -> Unit)? = null
     private var onUIThread: Boolean = false
 
     /**
@@ -93,12 +93,12 @@ open class MutableResult<T> : Result<T>() {
         this.value = value
         if (onUIThread && !isOnMainThread) {
             handler.post {
-                whenComplete?.invoke()
-                whenSuccess?.invoke(value)
+                onComplete?.invoke()
+                onSuccess?.invoke(value)
             }
         } else {
-            whenComplete?.invoke()
-            whenSuccess?.invoke(value)
+            onComplete?.invoke()
+            onSuccess?.invoke(value)
         }
     }
 
@@ -107,25 +107,25 @@ open class MutableResult<T> : Result<T>() {
         this.value = reason
         if (onUIThread && !isOnMainThread) {
             handler.post {
-                whenComplete?.invoke()
-                whenFailure?.invoke(reason)
+                onComplete?.invoke()
+                onFailure?.invoke(reason)
             }
         } else {
-            whenComplete?.invoke()
-            whenFailure?.invoke(reason)
+            onComplete?.invoke()
+            onFailure?.invoke(reason)
         }
     }
 
-    fun whenComplete(action: () -> Unit): MutableResult<T> {
-        this.whenComplete = action
+    fun onComplete(action: () -> Unit): MutableResult<T> {
+        this.onComplete = action
         if (success != null) {
             action.invoke() //already complete
         }
         return this
     }
 
-    fun whenSuccess(action: (T?) -> Unit): MutableResult<T> {
-        this.whenSuccess = action
+    override fun onSuccess(action: (T?) -> Unit): MutableResult<T> {
+        this.onSuccess = action
         if (success == true) {
             if (onUIThread && !isOnMainThread) {
                 handler.post {
@@ -138,12 +138,12 @@ open class MutableResult<T> : Result<T>() {
         return this
     }
 
-    fun whenSuccessVoid(executable: Executable<T>): MutableResult<T> {
-        return whenSuccess { executable.execute(it) }
+    override fun onSuccessVoid(executable: Executable<T>): MutableResult<T> {
+        return onSuccess { executable.execute(it) }
     }
 
-    fun whenFailure(action: (Reason?) -> Unit): MutableResult<T> {
-        this.whenFailure = action
+    override fun onFailure(action: (Reason?) -> Unit): MutableResult<T> {
+        this.onFailure = action
         if (success == false) {
             if (onUIThread && !isOnMainThread) {
                 handler.post {
@@ -156,26 +156,8 @@ open class MutableResult<T> : Result<T>() {
         return this
     }
 
-    fun whenFailureVoid(executable: Executable<Reason>): MutableResult<T> {
-        return whenFailure { executable.execute(it) }
-    }
-
-    @Deprecated(
-        "Should use whenSuccess instead.",
-        ReplaceWith("whenSuccess"),
-        DeprecationLevel.ERROR
-    )
-    override fun onSuccess(action: (T?) -> Unit): Result<T> {
-        return super.onSuccess(action)
-    }
-
-    @Deprecated(
-        "Should use whenFailure instead.",
-        ReplaceWith("whenFailure"),
-        DeprecationLevel.ERROR
-    )
-    override fun onFailure(action: (Reason?) -> Unit): Result<T> {
-        return super.onFailure(action)
+    override fun onFailureVoid(executable: Executable<Reason>): MutableResult<T> {
+        return onFailure { executable.execute(it) }
     }
 
     companion object {

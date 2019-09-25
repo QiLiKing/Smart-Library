@@ -28,8 +28,8 @@ internal open class FirstRealmData<T : RealmModel>(
     }
 
     override fun onChange(t: T?) {
-        LiveScope.copyAsync(t).whenSuccess {
-            if (value != null && differ?.different(value!!, t) == false) return@whenSuccess
+        LiveScope.copyAsync(t).onSuccess {
+            if (value != null && differ?.different(value!!, t) == false) return@onSuccess
             postValue(it)
         }
     }
