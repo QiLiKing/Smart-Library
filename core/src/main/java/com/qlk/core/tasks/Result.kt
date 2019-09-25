@@ -118,11 +118,23 @@ open class MutableResult<T> : Result<T>() {
 
     fun whenComplete(action: () -> Unit): MutableResult<T> {
         this.whenComplete = action
+        if (success != null) {
+            action.invoke() //already complete
+        }
         return this
     }
 
     fun whenSuccess(action: (T?) -> Unit): MutableResult<T> {
         this.whenSuccess = action
+        if (success == true) {
+            if (onUIThread && !isOnMainThread) {
+                handler.post {
+                    action.invoke(value as T?)
+                }
+            } else {
+                action.invoke(value as T?)
+            }
+        }
         return this
     }
 
@@ -132,6 +144,15 @@ open class MutableResult<T> : Result<T>() {
 
     fun whenFailure(action: (Reason?) -> Unit): MutableResult<T> {
         this.whenFailure = action
+        if (success == false) {
+            if (onUIThread && !isOnMainThread) {
+                handler.post {
+                    action.invoke(value as Reason?)
+                }
+            } else {
+                action.invoke(value as Reason?)
+            }
+        }
         return this
     }
 

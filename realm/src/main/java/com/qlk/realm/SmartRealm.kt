@@ -340,8 +340,11 @@ object AsyncRealm {
 
     private fun <T> submit(action: () -> T?): FutureTracker<T> = FutureTracker<T>().apply {
         setJob(realmExecutor.submit job@{
-            kotlin.runCatching { action() }.onSuccess { success(it) }
-                .onFailure { failure(Reason().withException(it)) }
+            kotlin.runCatching { action() }.onSuccess {
+                success(it)
+            }.onFailure {
+                failure(Reason().withException(it))
+            }
         })
     }
 
