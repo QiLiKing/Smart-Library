@@ -19,6 +19,8 @@ import java.util.concurrent.Executors
  * Created by QiLiKing on 2019-07-27.
  */
 
+internal val SmartTag = "SmartRealm"
+
 /** use lazy waiting for [SmartRealm.initFactory] */
 internal val realmExecutor: ExecutorService by lazy { Executors.newFixedThreadPool(SmartRealm.threadPoolSize) }
 //internal val realmExecutor: ExecutorService by lazy { RealmPoolExecutor(SmartRealm.threadPoolSize) }
@@ -56,7 +58,7 @@ object SmartRealm {
         ?: 0
 
     @JvmStatic
-    fun <T : RealmModel> findFirst(
+    fun <T : RealmModel> getFirst(
         clazz: Class<T>,
         queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
     ): T? =
@@ -67,11 +69,11 @@ object SmartRealm {
         clazz: Class<T>,
         transfer: T.() -> R?,
         queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
-    ): R? = read { findFirst(clazz, queryBuilder)?.transfer() }
+    ): R? = read { getFirst(clazz, queryBuilder)?.transfer() }
 
     @JvmStatic
     @JvmOverloads
-    fun <T : RealmModel> findAll(
+    fun <T : RealmModel> getAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
     ): List<T> = read { copyAll(queryBuilder(query(clazz)).findAll()) }
@@ -86,7 +88,7 @@ object SmartRealm {
         clazz: Class<T>,
         transfer: T.() -> R?,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<R> = read { findAll(clazz, queryBuilder).mapNotNull(transfer) }
+    ): List<R> = read { getAll(clazz, queryBuilder).mapNotNull(transfer) }
         ?: emptyList()
 
     @JvmStatic
@@ -181,11 +183,11 @@ object SyncRealm {
     ): Long = runBlocking(realmDispatcher) { SmartRealm.count(clazz, queryBuilder) }
 
     @JvmStatic
-    fun <T : RealmModel> findFirst(
+    fun <T : RealmModel> getFirst(
         clazz: Class<T>,
         queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
     ): T? =
-        runBlocking(realmDispatcher) { SmartRealm.findFirst(clazz, queryBuilder) }
+        runBlocking(realmDispatcher) { SmartRealm.getFirst(clazz, queryBuilder) }
 
     @JvmStatic
     fun <T : RealmModel, R : Any> translateFirst(
@@ -197,10 +199,10 @@ object SyncRealm {
 
     @JvmStatic
     @JvmOverloads
-    fun <T : RealmModel> findAll(
+    fun <T : RealmModel> getAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<T> = runBlocking(realmDispatcher) { SmartRealm.findAll(clazz, queryBuilder) }
+    ): List<T> = runBlocking(realmDispatcher) { SmartRealm.getAll(clazz, queryBuilder) }
 
     @JvmStatic
     @JvmOverloads
@@ -273,10 +275,10 @@ object AsyncRealm {
     ): FutureTracker<Long> = submit { SmartRealm.count(clazz, queryBuilder) }
 
     @JvmStatic
-    fun <T : RealmModel> findFirst(
+    fun <T : RealmModel> getFirst(
         clazz: Class<T>,
         queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
-    ): FutureTracker<T> = submit { SmartRealm.findFirst(clazz, queryBuilder) }
+    ): FutureTracker<T> = submit { SmartRealm.getFirst(clazz, queryBuilder) }
 
     @JvmStatic
     fun <T : RealmModel, R : Any> translateFirst(
@@ -287,10 +289,10 @@ object AsyncRealm {
 
     @JvmStatic
     @JvmOverloads
-    fun <T : RealmModel> findAll(
+    fun <T : RealmModel> getAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): FutureTracker<List<T>> = submit { SmartRealm.findAll(clazz, queryBuilder) }
+    ): FutureTracker<List<T>> = submit { SmartRealm.getAll(clazz, queryBuilder) }
 
     @JvmStatic
     @JvmOverloads
@@ -360,7 +362,7 @@ object LiveRealm {
     ): LiveData<Int> = CountRealmData(clazz, queryBuilder, differ)
 
     @JvmStatic
-    fun <T : RealmModel> findFirst(
+    fun <T : RealmModel> getFirst(
         clazz: Class<T>,
         differ: Differ<T>? = null,
         queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
@@ -376,7 +378,7 @@ object LiveRealm {
 
     @JvmStatic
     @JvmOverloads
-    fun <T : RealmModel> findAll(
+    fun <T : RealmModel> getAll(
         clazz: Class<T>,
         differ: Differ<T>? = null,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }

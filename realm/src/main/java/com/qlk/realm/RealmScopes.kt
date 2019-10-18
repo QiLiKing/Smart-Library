@@ -1,5 +1,6 @@
 package com.qlk.realm
 
+import android.util.Log
 import com.qlk.core.IFastCopy
 import com.qlk.core.extensions.isInitialized
 import io.realm.Realm
@@ -217,6 +218,8 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
         if (!realm.isInTransaction) {
             realm.beginTransaction()
             transactedRealms.add(realm)
+        } else {
+            Log.e(SmartTag, "Realm is already in transaction! clazz=$clazz")
         }
         return realm
     }
