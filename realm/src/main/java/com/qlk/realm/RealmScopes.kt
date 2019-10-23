@@ -215,12 +215,14 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
 
     private fun transact(clazz: Class<out RealmModel>): Realm {
         val realm = openTable(clazz)
-//        if (!realm.isInTransaction) {
-        realm.beginTransaction()
-        transactedRealms.add(realm)
-//        } else {
-//            Log.e(SmartTag, "Realm is already in transaction! clazz=$clazz")
-//        }
+        if (!realm.isInTransaction) {
+            realm.beginTransaction()
+            transactedRealms.add(realm)
+        } else {
+            if (BuildConfig.DEBUG && !transactedRealms.contains(realm)) {
+                Log.e(SmartTag, "Realm is already in transaction! clazz=$clazz")
+            }
+        }
         return realm
     }
 
