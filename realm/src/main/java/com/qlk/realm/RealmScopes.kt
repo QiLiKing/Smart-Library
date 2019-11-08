@@ -1,7 +1,6 @@
 package com.qlk.realm
 
 import android.util.Log
-import com.qlk.core.IFastCopy
 import com.qlk.core.extensions.isInitialized
 import io.realm.Realm
 import io.realm.RealmModel
@@ -46,7 +45,7 @@ interface IReadScope {
      * @return empty if [models] is not a managed and valid [RealmResults]
      * @see handleByRealm
      */
-    fun <T : RealmModel> copyAll(models: RealmResults<T>): List<T>
+    fun <T : RealmModel> copyAll(models: List<T>): List<T>
 }
 
 interface IWriteScope {
@@ -66,7 +65,7 @@ interface IWriteScope {
     /**
      * It will be called at end automatically if you not do this.
      */
-    fun commitTransaction();
+    fun commitTransaction()
 }
 
 /**
@@ -118,9 +117,6 @@ internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
     }
 
     override fun <T : RealmModel> copy(model: T?): T? {
-        if (model as? IFastCopy<T> != null) {
-            return model.fastCopy()
-        }
         if (model.handleByRealm()) {
             val clazz = model.tableClass
             return openTable(clazz).copyFromRealm(
@@ -131,13 +127,8 @@ internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
         return null
     }
 
-    override fun <T : RealmModel> copyAll(models: RealmResults<T>): List<T> {
+    override fun <T : RealmModel> copyAll(models: List<T>): List<T> {
         if (models.isEmpty() || !models.handleByRealm()) return emptyList()
-
-        val first: T = models.first()!!
-        if (first as? IFastCopy<T> != null) {
-            return models.mapNotNull { (it as? IFastCopy<T>)?.fastCopy() }
-        }
         val clazz = models.tableClass() ?: return emptyList()
         return openTable(clazz).copyFromRealm(
             models,
@@ -249,7 +240,7 @@ internal class ReadWriteScopeImpl : WriteScopeImpl(), IReadWriteScope {
 
     override fun <T : RealmModel> copy(model: T?): T? = reader.copy(model)
 
-    override fun <T : RealmModel> copyAll(models: RealmResults<T>): List<T> =
+    override fun <T : RealmModel> copyAll(models: List<T>): List<T> =
         reader.copyAll(models)
 
     override fun close() {
