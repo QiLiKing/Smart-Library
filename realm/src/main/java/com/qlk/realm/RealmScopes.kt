@@ -31,7 +31,7 @@ interface IRealmScope : Closeable {
  *
  * If you want to use the result outside, must call [IReadScope.copy] or [IReadScope.copyAll]
  */
-interface IReadScope {
+interface IReadScope : IRealmScope {
 
     fun <T : RealmModel> query(clazz: Class<T>): RealmQuery<T>
 
@@ -48,7 +48,7 @@ interface IReadScope {
     fun <T : RealmModel> copyAll(models: List<T>): List<T>
 }
 
-interface IWriteScope {
+interface IWriteScope : IRealmScope {
 
     fun insertOrUpdate(model: RealmModel?)
 

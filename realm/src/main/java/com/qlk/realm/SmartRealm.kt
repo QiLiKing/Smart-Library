@@ -35,6 +35,15 @@ class AtomicRealm : IRealmScope by RealmScopeImpl()
  * Realm operations which will run into your current thread.
  */
 object SmartRealm {
+    @JvmStatic
+    fun newReadScope(): IReadScope = ReadScopeImpl()
+
+    @JvmStatic
+    fun newWriteScope(): IWriteScope = WriteScopeImpl()
+
+    @JvmStatic
+    fun newReadWriteScope(): IReadWriteScope = ReadWriteScopeImpl()
+
     /* Basic Operations [Managed]. If you want to use the scope data outside, do copy first, OR will cause an error (database closed automatically once the scope finished) */
 
     @JvmStatic

@@ -8,7 +8,7 @@ import com.qlk.core.isInDebugMode
  * QQ：1055329812<br/>
  * Created by QiLiKing on 2019-07-16 08:40
  */
-object CachePools {
+object SmartCache {
     private const val DEFAULT_POOL_CAPACITY = 5
 
     private val poolCapacity: HashMap<PoolName, ByteSize> by lazy { HashMap<PoolName, ByteSize>() }
@@ -24,16 +24,16 @@ object CachePools {
         return getOrNull<V>(poolName, cacheTag)?.also { remove(cacheTag) }
     }
 
-    /**
-     * @param tag recommend you to set it same as the value's simple class name
-     *
-     * @param creator createDefault new one if there is no cache
-     */
     @JvmStatic
     fun <V : Cacheable> getOrNull(poolName: PoolName, cacheTag: CacheTag): V? {
         return obtainPool<V>(poolName).getFromPool(cacheTag)
     }
 
+    /**
+     * @param cacheTag recommend you to set it same as the value's simple class name
+     *
+     * @param creator createDefault new one if there is no cache
+     */
     @JvmStatic
     fun <V : Cacheable> getOrCreate(poolName: PoolName, cacheTag: CacheTag, creator: () -> V): V {
         return getOrNull(poolName, cacheTag) ?: creator.invoke().also {

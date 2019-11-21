@@ -206,7 +206,7 @@ class JobTracker<T> : MutableResult<T>() {
     }
 
     fun cache(cacheTag: CacheTag) {
-        CachePools.put(TrackerPool, cacheTag, this)
+        SmartCache.put(TrackerPool, cacheTag, this)
     }
 
     companion object {
@@ -214,17 +214,17 @@ class JobTracker<T> : MutableResult<T>() {
 
         @JvmStatic
         fun <T> cancelJobFromCache(cacheTag: CacheTag) {
-            CachePools.getAndRemove<JobTracker<T>>(TrackerPool, cacheTag)?.cancelJob()
+            SmartCache.getAndRemove<JobTracker<T>>(TrackerPool, cacheTag)?.cancelJob()
         }
 
         @JvmStatic
         fun <T> resumeJobFromCache(cacheTag: CacheTag) {
-            CachePools.getAndRemove<JobTracker<T>>(TrackerPool, cacheTag)?.resumeJob()
+            SmartCache.getAndRemove<JobTracker<T>>(TrackerPool, cacheTag)?.resumeJob()
         }
 
         @JvmStatic
         fun <T> suspendJobFromCache(cacheTag: CacheTag) {
-            CachePools.getAndRemove<JobTracker<T>>(TrackerPool, cacheTag)?.suspendJob()
+            SmartCache.getAndRemove<JobTracker<T>>(TrackerPool, cacheTag)?.suspendJob()
         }
     }
 }
@@ -263,7 +263,7 @@ class FutureTracker<T> : MutableResult<T>() {
     }
 
     fun cache(cacheTag: CacheTag) {
-        CachePools.put(TrackerPool, cacheTag, this)
+        SmartCache.put(TrackerPool, cacheTag, this)
     }
 
     companion object {
@@ -271,17 +271,17 @@ class FutureTracker<T> : MutableResult<T>() {
 
         @JvmStatic
         fun <T> cancelJobFromCache(cacheTag: CacheTag) {
-            CachePools.getAndRemove<FutureTracker<T>>(TrackerPool, cacheTag)?.cancelJob()
+            SmartCache.getAndRemove<FutureTracker<T>>(TrackerPool, cacheTag)?.cancelJob()
         }
 
         @JvmStatic
         fun <T> resumeJobFromCache(cacheTag: CacheTag) {
-            CachePools.getAndRemove<FutureTracker<T>>(TrackerPool, cacheTag)?.resumeJob()
+            SmartCache.getAndRemove<FutureTracker<T>>(TrackerPool, cacheTag)?.resumeJob()
         }
 
         @JvmStatic
         fun <T> suspendJobFromCache(cacheTag: CacheTag) {
-            CachePools.getAndRemove<FutureTracker<T>>(TrackerPool, cacheTag)?.suspendJob()
+            SmartCache.getAndRemove<FutureTracker<T>>(TrackerPool, cacheTag)?.suspendJob()
         }
     }
 }
