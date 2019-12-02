@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
 internal val SmartTag = "SmartRealm"
 
 /** use lazy waiting for [SmartRealm.initFactory] */
-internal val realmExecutor: ExecutorService by lazy { Executors.newCachedThreadPool() } //如果固定数量，当任务太多时，会导致界面很久刷不出来。
+internal val realmExecutor: ExecutorService by lazy { SmartRealm.getRealmExecutor() } //如果固定数量，当任务太多时，会导致界面很久刷不出来。
 //internal val realmExecutor: ExecutorService by lazy { RealmPoolExecutor(SmartRealm.threadPoolSize) }
 internal val realmDispatcher: CoroutineDispatcher by lazy { realmExecutor.asCoroutineDispatcher() }
 
@@ -149,16 +149,21 @@ object SmartRealm {
 //    ): Int = updateEach(clazz, queryBuilder) { updater.execute(this) }
 
     private lateinit var factory: IRealmFactory
+    private lateinit var executor: ExecutorService
 
-    /**
-     * @param asyncThreadCount used for [SyncRealm] and [AsyncRealm]
-     */
     @JvmStatic
-    fun initFactory(factory: IRealmFactory) {
+    @JvmOverloads
+    fun initFactory(
+        factory: IRealmFactory,
+        executor: ExecutorService = Executors.newCachedThreadPool()
+    ) {
         SmartRealm.factory = factory
+        SmartRealm.executor = executor
     }
 
     internal fun getRealmFactory(): IRealmFactory = factory
+
+    internal fun getRealmExecutor(): ExecutorService = executor
 }
 
 /**
