@@ -61,11 +61,6 @@ interface IWriteScope : IRealmScope {
     fun <T : RealmModel> copyToRealmOrUpdate(model: T): T
 
     fun deleteTable(table: Class<out RealmModel>)
-
-    /**
-     * It will be called at end automatically if you not do this.
-     */
-    fun commitTransaction()
 }
 
 /**
@@ -82,6 +77,13 @@ interface IReadWriteScope : IReadScope, IWriteScope {
      * @param auto default true.
      */
     fun autoTransactionWhenQuery(auto: Boolean = true)
+
+    /**
+     * transaction will be committed automatically at end of the scope.
+     * You needn't invoke it manually at most of time.
+     * This method will set "autoTransactionWhenQuery" to false after
+     */
+    fun commitTransaction()
 }
 
 internal open class RealmScopeImpl : IRealmScope {
@@ -167,7 +169,7 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
         }
     }
 
-    override fun commitTransaction() {
+    open fun commitTransaction() {
         try {
             transactedRealms.forEach {
                 it.tryCommit()
@@ -242,6 +244,11 @@ internal class ReadWriteScopeImpl : WriteScopeImpl(), IReadWriteScope {
 
     override fun <T : RealmModel> copyAll(models: List<T>): List<T> =
         reader.copyAll(models)
+
+    override fun commitTransaction() {
+        super.commitTransaction()
+        autoTransactionWhenQuery(false)
+    }
 
     override fun close() {
         if (this::reader.isInitialized) { //maybe never use any read operation
