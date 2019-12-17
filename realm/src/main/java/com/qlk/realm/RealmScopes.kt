@@ -24,6 +24,11 @@ interface IRealmScope : Closeable {
     fun openTable(table: Class<out RealmModel>): Realm
 
     fun closeTable(table: Class<out RealmModel>)
+
+    /**
+     * wrap "close" method with try-catch
+     */
+    fun closeSafety()
 }
 
 /**
@@ -107,6 +112,14 @@ internal open class RealmScopeImpl : IRealmScope {
      */
     override fun closeTable(table: Class<out RealmModel>) {
         openedRealms.remove(table)?.close()
+    }
+
+    override fun closeSafety() {
+        try {
+            close()
+        } catch (t: Throwable) {
+            t.printStackTrace()
+        }
     }
 }
 
