@@ -24,7 +24,17 @@ object SmartLiveData {
     }
 
     @JvmStatic
-    fun <T> getSafety(source: LiveData<List<T>>): List<T> {
+    fun <T> getOrEmpty(source: LiveData<List<T>>): List<T> {
         return source.value ?: Collections.emptyList()
+    }
+
+    @JvmStatic
+    fun <T> getOrDefault(source: LiveData<List<T>>, default: List<T>): List<T> {
+        return source.value ?: default
+    }
+
+    @JvmStatic
+    fun <T> getOrDefault(source: LiveData<T>, default: T): T {
+        return source.value ?: default
     }
 }
