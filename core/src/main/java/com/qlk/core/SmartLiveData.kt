@@ -3,6 +3,7 @@ package com.qlk.core
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.os.Looper
+import java.util.*
 
 /**
  *
@@ -20,5 +21,10 @@ object SmartLiveData {
                 source.postValue(data)
             }
         }
+    }
+
+    @JvmStatic
+    fun <T> getSafety(source: LiveData<List<T>>): List<T> {
+        return source.value ?: Collections.emptyList()
     }
 }
