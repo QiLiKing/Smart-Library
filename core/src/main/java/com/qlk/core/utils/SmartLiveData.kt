@@ -1,4 +1,4 @@
-package com.qlk.core
+package com.qlk.core.utils
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData

@@ -1,4 +1,4 @@
-package com.qlk.core
+package com.qlk.core.ui
 
 import android.graphics.Color
 import android.graphics.Rect
