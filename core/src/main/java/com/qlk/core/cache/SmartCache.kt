@@ -21,7 +21,7 @@ object SmartCache {
 
     @JvmStatic
     fun <V : Cacheable> getAndRemove(poolName: PoolName, cacheTag: CacheTag): V? {
-        return getOrNull<V>(poolName, cacheTag)?.also { remove(cacheTag) }
+        return getOrNull<V>(poolName, cacheTag)?.also { clearPool(cacheTag) }
     }
 
     @JvmStatic
@@ -50,7 +50,7 @@ object SmartCache {
     }
 
     @JvmStatic
-    fun remove(vararg poolNames: PoolName = pools.keys.toTypedArray()) =
+    fun clearPool(vararg poolNames: PoolName = pools.keys.toTypedArray()) =
         synchronized(pools) { poolNames.forEach { pools[it]?.clearPool() } }
 
     @JvmStatic
