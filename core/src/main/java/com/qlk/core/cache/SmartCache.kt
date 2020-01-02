@@ -64,8 +64,8 @@ object SmartCache {
     }
 
     @JvmStatic
-    fun getAll(poolName: PoolName): Map<CacheTag, Cacheable> =
-        pools[poolName]?.getAllFromPool() ?: hashMapOf()
+    fun <V : Cacheable> getAll(poolName: PoolName): Map<CacheTag, V> =
+        (pools[poolName] as? ICachePool<V>)?.getAllFromPool() ?: hashMapOf()
 
     @JvmStatic
     fun clearPool(vararg poolNames: PoolName = pools.keys.toTypedArray()) =
