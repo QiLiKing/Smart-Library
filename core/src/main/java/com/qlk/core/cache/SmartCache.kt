@@ -3,6 +3,8 @@ package com.qlk.core.cache
 import com.qlk.core.isInDebugMode
 
 /**
+ *  The default implementation is subclass of LruCache.
+ *  If you have custom function, see [SmartCache.setPoolDelegate]
  *
  * <br/>
  * QQ：1055329812<br/>
@@ -13,6 +15,18 @@ object SmartCache {
 
     private val poolCapacity: HashMap<PoolName, ByteSize> by lazy { HashMap<PoolName, ByteSize>() }
     private val pools: HashMap<PoolName, ICachePool<*>> by lazy { HashMap<PoolName, ICachePool<*>>() }
+
+    /**
+     * @param pool null - remove pool delegate
+     */
+    @JvmStatic
+    fun <V : Cacheable> setPoolDelegate(poolName: PoolName, pool: ICachePool<V>?) {
+        if (pool == null) {
+            pools.remove(poolName)
+        } else {
+            pools[poolName] = pool
+        }
+    }
 
     @JvmStatic
     fun setPoolCapacity(poolName: PoolName, capacity: ByteSize) {
@@ -67,7 +81,7 @@ object SmartCache {
 
     private fun <V : Cacheable> obtainPool(poolName: PoolName): ICachePool<V> {
         return synchronized(pools) {
-            (pools[poolName] as? CachePoolImpl<V>)
+            (pools[poolName] as? ICachePool<V>)
                 ?: CachePoolImpl<V>(obtainPoolCapacity(poolName)).also {
                     pools[poolName] = it
                     if (isInDebugMode) println("CachePools#obtainPool()-> create pool tag:$poolName capacity:${poolCapacity[poolName]}")
