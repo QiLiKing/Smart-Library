@@ -12,6 +12,8 @@ interface ICachePool<V : Cacheable> {
 
     fun getFromPool(tag: CacheTag): V?
 
+    fun getAllFromPool(): Map<CacheTag, V>
+
     fun clearPool()
 
     fun currentSize(): ByteSize
