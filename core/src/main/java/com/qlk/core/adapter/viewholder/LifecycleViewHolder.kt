@@ -11,7 +11,8 @@ import com.qlk.core.lifecycle.MediatorLifecycle
 /**
  * @see LazyLoadViewHolder
  */
-abstract class LifecycleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), LifecycleOwner,
+abstract class LifecycleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
+    LifecycleOwner,
     ISimpleLifecycle, LifecycleObserver {
     private var mediatorLifecycle: MediatorLifecycle? = null
 
@@ -19,7 +20,11 @@ abstract class LifecycleViewHolder(itemView: View) : RecyclerView.ViewHolder(ite
         LifecycleRegistry(this).also { it.addObserver(this) }
     }
 
-    @Deprecated("It is inaccurate for mediator lifecycle.", ReplaceWith("onViewHolderActive"), DeprecationLevel.HIDDEN)
+    @Deprecated(
+        "It is inaccurate for mediator lifecycle.",
+        ReplaceWith("onViewHolderActive"),
+        DeprecationLevel.WARNING    //Java has issue if use HIDDEN
+    )
     override fun onActive() {
         internalLifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
     }
@@ -27,7 +32,7 @@ abstract class LifecycleViewHolder(itemView: View) : RecyclerView.ViewHolder(ite
     @Deprecated(
         "It is inaccurate for mediator lifecycle.",
         ReplaceWith("onViewHolderInactive"),
-        DeprecationLevel.HIDDEN
+        DeprecationLevel.WARNING
     )
     override fun onInactive() {
         internalLifecycle.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
