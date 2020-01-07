@@ -1,6 +1,8 @@
 package com.qlk.core
 
 import android.os.Looper
+import kotlin.reflect.KProperty0
+import kotlin.reflect.jvm.isAccessible
 
 /**
  *
@@ -28,5 +30,12 @@ sealed class Durations {
         const val FRAME_INTERVAL = 16L
     }
 }
+
+//https://cloud.tencent.com/developer/ask/121624
+val <T> KProperty0<T>.initialized: Boolean
+    get() {
+        isAccessible = true
+        return (getDelegate() as? Lazy<*>)?.isInitialized() ?: true
+    }
 
 val isOnMainThread = Looper.myLooper() == Looper.getMainLooper()
