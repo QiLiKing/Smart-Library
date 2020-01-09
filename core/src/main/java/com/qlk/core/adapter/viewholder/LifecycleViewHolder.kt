@@ -74,12 +74,12 @@ abstract class LifecycleViewHolder(itemView: View) : RecyclerView.ViewHolder(ite
     /* internal observer */
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    protected fun onViewHolderActive() {
+    protected open fun onViewHolderActive() {
         if (isInDebugMode) println("LifecycleViewHolder#onViewHolderActive:73-> $adapterPosition")
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    protected fun onViewHolderInactive() {
+    protected open fun onViewHolderInactive() {
         if (isInDebugMode) println("LifecycleViewHolder#onViewHolderInactive:79-> $adapterPosition")
     }
 }

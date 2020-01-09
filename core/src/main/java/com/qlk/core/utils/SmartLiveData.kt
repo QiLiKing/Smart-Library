@@ -12,9 +12,16 @@ import java.util.*
  * Created by QiLiKing on 2019-11-08
  */
 object SmartLiveData {
+    /**
+     * @param ignoreSameValue ignore emit if new data and old one are [equals]
+     */
     @JvmStatic
-    fun <T> emit(source: LiveData<T>, data: T) {
+    @JvmOverloads
+    fun <T> emit(source: LiveData<T>, data: T, ignoreSameValue: Boolean = false) {
         if (source is MutableLiveData) {
+            if (ignoreSameValue && source.value == data) {
+                return
+            }
             if (Looper.myLooper() == Looper.getMainLooper()) {
                 source.value = data
             } else {
