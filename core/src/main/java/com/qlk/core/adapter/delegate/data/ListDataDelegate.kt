@@ -26,7 +26,7 @@ class ListDataDelegateImpl<T>(
 
     private val datas = mutableListOf<T>()
 
-    override fun getFlatItems(): List<T> = datas
+    override fun getFlatItems(): List<T> = ArrayList(datas)
 
     override fun onDiffDelegateChanged(newDelegate: IDiffDelegate<T>?) {
         diffDelegate = newDelegate  //should stop old diff task first?
