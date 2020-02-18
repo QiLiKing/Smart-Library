@@ -92,8 +92,7 @@ interface IReadWriteScope : IReadScope, IWriteScope {
 }
 
 internal open class RealmScopeImpl : IRealmScope {
-
-    private val openedRealms = HashMap<Class<out RealmModel>, Realm>()
+    private val openedRealms = HashMap<Class<out RealmModel>, Realm>()  //needn't synchronize
 
     override fun close() {
         openedRealms.forEach {
@@ -155,7 +154,7 @@ internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
 internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
 
     //begin transaction by this scope, and should commit when completed.
-    private val transactedRealms by lazy { HashSet<Realm>() }
+    private val transactedRealms by lazy { HashSet<Realm>() }   //needn't synchronize
 
     override fun insertOrUpdate(model: RealmModel?) {
         if (model == null) return
@@ -221,14 +220,16 @@ internal open class WriteScopeImpl : RealmScopeImpl(), IWriteScope {
 
     private fun transact(clazz: Class<out RealmModel>): Realm {
         val realm = openTable(clazz)
-        if (!realm.isInTransaction) {
+//        if (!realm.isInTransaction) {     //I think we should throw exceptions
+        if (!transactedRealms.contains(realm)) {
             realm.beginTransaction()
             transactedRealms.add(realm)
-        } else {
-            if (BuildConfig.DEBUG && !transactedRealms.contains(realm)) {
-                Log.e(SmartTag, "Realm is already in transaction! clazz=$clazz")
-            }
         }
+//        else {
+//            if (BuildConfig.DEBUG && !transactedRealms.contains(realm)) {
+//                Log.w(SmartTag, "Realm is already in transaction! clazz=$clazz")
+//            }
+//        }
         return realm
     }
 
