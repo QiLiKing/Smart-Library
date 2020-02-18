@@ -85,8 +85,8 @@ object SmartRealm {
     fun <T : RealmModel> getAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<T> = read { copyAll(queryBuilder(query(clazz)).findAll()) }
-        ?: emptyList()
+    ): MutableList<T> = read { copyAll(queryBuilder(query(clazz)).findAll()) }
+        ?: ArrayList()
 
     /**
      * Remove the element if it is null after translation. So the results' elements are all nonnull.
@@ -97,8 +97,8 @@ object SmartRealm {
         clazz: Class<T>,
         transfer: T.() -> R?,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<R> = read { getAll(clazz, queryBuilder).mapNotNull(transfer) }
-        ?: emptyList()
+    ): MutableList<R> = read { getAll(clazz, queryBuilder).mapNotNull(transfer).toMutableList() }
+        ?: ArrayList()
 
     @JvmStatic
     fun insertOrUpdate(model: RealmModel) {
@@ -213,7 +213,7 @@ object SyncRealm {
     fun <T : RealmModel> getAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<T> = runBlocking(realmDispatcher) { SmartRealm.getAll(clazz, queryBuilder) }
+    ): MutableList<T> = runBlocking(realmDispatcher) { SmartRealm.getAll(clazz, queryBuilder) }
 
     @JvmStatic
     @JvmOverloads
@@ -221,7 +221,7 @@ object SyncRealm {
         clazz: Class<T>,
         transfer: T.() -> R?,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): List<R> =
+    ): MutableList<R> =
         runBlocking(realmDispatcher) { SmartRealm.translateAll(clazz, transfer, queryBuilder) }
 
     @JvmStatic
@@ -303,7 +303,7 @@ object AsyncRealm {
     fun <T : RealmModel> getAll(
         clazz: Class<T>,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): FutureTracker<List<T>> = submit { SmartRealm.getAll(clazz, queryBuilder) }
+    ): FutureTracker<MutableList<T>> = submit { SmartRealm.getAll(clazz, queryBuilder) }
 
     @JvmStatic
     @JvmOverloads
@@ -311,7 +311,7 @@ object AsyncRealm {
         clazz: Class<T>,
         transfer: T.() -> R?,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): FutureTracker<List<R>> = submit { SmartRealm.translateAll(clazz, transfer, queryBuilder) }
+    ): FutureTracker<MutableList<R>> = submit { SmartRealm.translateAll(clazz, transfer, queryBuilder) }
 
     @JvmStatic
     fun insertOrUpdate(model: RealmModel): FutureTracker<Unit> =
@@ -393,7 +393,7 @@ object LiveRealm {
         clazz: Class<T>,
         differ: Differ<T>? = null,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): LiveData<List<T>> = MultiRealmData(clazz, queryBuilder, differ)
+    ): LiveData<MutableList<T>> = MultiRealmData(clazz, queryBuilder, differ)
 
     @JvmStatic
     @JvmOverloads
@@ -402,75 +402,5 @@ object LiveRealm {
         transfer: T.() -> R,
         differ: Differ<R>? = null,
         queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>) = { it }
-    ): LiveData<List<R>> = MultiRealmTransferData(clazz, queryBuilder, transfer, differ)
+    ): LiveData<MutableList<R>> = MultiRealmTransferData(clazz, queryBuilder, transfer, differ)
 }
-
-//interface IRealmOperation {
-//
-//    fun <T> read(action: IReadScope.() -> T?): T?
-//
-//    fun <T> write(action: IWriteScope.() -> T?): T?
-//
-//    fun <T> readWrite(action: IReadWriteScope.() -> T?): T?
-//
-//    fun <T : RealmModel> count(clazz: Class<T>, queryBuilder: (RealmQuery<T>) -> RealmQuery<T>): Long
-//
-//    fun <T : RealmModel> findFirst(clazz: Class<T>, queryBuilder: (RealmQuery<T>) -> RealmQuery<T>): T?
-//
-//    fun <T : RealmModel, R : Any> translateFirst(
-//        clazz: Class<T>, transfer: T.() -> R?, queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
-//    ): R?
-//
-//    fun <T : RealmModel> findAll(
-//        clazz: Class<T>, queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>)
-//    ): List<T>
-//
-//    fun <T : RealmModel, R : Any> translateAll(
-//        clazz: Class<T>, transfer: T.() -> R?, queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>)
-//    ): List<R>
-//
-//    /* for Java */
-//
-//    fun readVoid(action: Executable<IReadScope>)
-//
-//    fun writeVoid(action: Executable<IWriteScope>)
-//
-//    fun readWriteVoid(action: Executable<IReadWriteScope>)
-//}
-//
-//interface IAsyncRealmOperation {
-//
-//    fun <T> read(action: IReadScope.() -> T?): FutureTracker<T>
-//
-//    fun <T> write(action: IWriteScope.() -> T?): FutureTracker<T>
-//
-//    fun <T> readWrite(action: IReadWriteScope.() -> T?): FutureTracker<T>
-//
-//    fun <T : RealmModel> count(
-//        clazz: Class<T>, queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
-//    ): FutureTracker<Long>
-//
-//    fun <T : RealmModel> findFirst(
-//        clazz: Class<T>, queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
-//    ): FutureTracker<T>
-//
-//    fun <T : RealmModel, R : Any> translateFirst(
-//        clazz: Class<T>, transfer: T.() -> R?, queryBuilder: (RealmQuery<T>) -> RealmQuery<T>
-//    ): FutureTracker<R>
-//
-//    fun <T : RealmModel> findAll(
-//        clazz: Class<T>, queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>)
-//    ): FutureTracker<List<T>>
-//
-//    fun <T : RealmModel, R : Any> translateAll(
-//        clazz: Class<T>, transfer: T.() -> R?, queryBuilder: ((RealmQuery<T>) -> RealmQuery<T>)
-//    ): FutureTracker<List<R>>
-//
-//    /* for Java */
-//
-//    fun readVoid(action: Executable<IReadScope>): FutureTracker<Unit>
-//
-//    fun writeVoid(action: Executable<IWriteScope>): FutureTracker<Unit>
-//
-//    fun readWriteVoid(action: Executable<IReadWriteScope>): FutureTracker<Unit>
-//

@@ -38,7 +38,7 @@ internal interface ILiveScope {
 
     fun <T : RealmModel> copyAsync(model: T?): JobTracker<T>
 
-    fun <T : RealmModel> copyAllAsync(models: RealmResults<T>): JobTracker<List<T>>
+    fun <T : RealmModel> copyAllAsync(models: RealmResults<T>): JobTracker<MutableList<T>>
 }
 
 internal object LiveScope : ILiveScope {
@@ -105,8 +105,8 @@ internal object LiveScope : ILiveScope {
         return tracker
     }
 
-    override fun <T : RealmModel> copyAllAsync(models: RealmResults<T>): JobTracker<List<T>> {
-        val tracker = JobTracker<List<T>>()
+    override fun <T : RealmModel> copyAllAsync(models: RealmResults<T>): JobTracker<MutableList<T>> {
+        val tracker = JobTracker<MutableList<T>>()
         handler.post {
             kotlin.runCatching { reader.copyAll(models) }.onFailure {
                 tracker.failure()

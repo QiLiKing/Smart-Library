@@ -17,7 +17,7 @@ internal open class MultiRealmData<T : RealmModel>(
     private val clazz: Class<T>,
     private val query: (RealmQuery<T>) -> RealmQuery<T>,
     private val differ: Differ<T>? = null
-) : LiveData<List<T>>(), RealmChangeListener<RealmResults<T>> {
+) : LiveData<MutableList<T>>(), RealmChangeListener<RealmResults<T>> {
 
     public override fun onActive() {
         super.onActive()

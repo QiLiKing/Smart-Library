@@ -1,6 +1,7 @@
 package com.qlk.realm.livedata
 
 import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.MutableLiveData
 import com.qlk.core.diff.Differ
 import com.qlk.core.diff.different
 import io.realm.RealmModel
@@ -16,11 +17,11 @@ internal class MultiRealmTransferData<T : RealmModel, R : Any>(
     query: (RealmQuery<T>) -> RealmQuery<T>,
     private val transfer: T.() -> R?,
     differ: Differ<R>? = null
-) : LiveData<List<R>>() {
+) : LiveData<MutableList<R>>() {
 
     private var delegate = object : MultiRealmData<T>(clazz, query) {
         override fun onChange(ts: RealmResults<T>) {
-            val rs = ts.mapNotNull { it.transfer() }
+            val rs = ts.mapNotNull { it.transfer() }.toMutableList()
             val cur = this@MultiRealmTransferData.value
             if (cur != null && differ?.different(cur, rs, differ.ignoreOps) == false) return
             this@MultiRealmTransferData.postValue(rs)

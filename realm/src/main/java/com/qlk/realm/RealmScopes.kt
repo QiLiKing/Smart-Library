@@ -8,6 +8,7 @@ import io.realm.RealmQuery
 import io.realm.RealmResults
 import java.io.Closeable
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 /**
@@ -50,7 +51,7 @@ interface IReadScope : IRealmScope {
      * @return empty if [models] is not a managed and valid [RealmResults]
      * @see handleByRealm
      */
-    fun <T : RealmModel> copyAll(models: List<T>): List<T>
+    fun <T : RealmModel> copyAll(models: List<T>): MutableList<T>
 }
 
 interface IWriteScope : IRealmScope {
@@ -141,9 +142,9 @@ internal open class ReadScopeImpl : RealmScopeImpl(), IReadScope {
         return null
     }
 
-    override fun <T : RealmModel> copyAll(models: List<T>): List<T> {
-        if (models.isEmpty() || !models.handleByRealm()) return emptyList()
-        val clazz = models.tableClass() ?: return emptyList()
+    override fun <T : RealmModel> copyAll(models: List<T>): MutableList<T> {
+        if (models.isEmpty() || !models.handleByRealm()) return ArrayList()
+        val clazz = models.tableClass() ?: return ArrayList()
         return openTable(clazz).copyFromRealm(
             models,
             SmartRealm.getRealmFactory().getCopyDeep(clazz)
@@ -256,7 +257,7 @@ internal class ReadWriteScopeImpl : WriteScopeImpl(), IReadWriteScope {
 
     override fun <T : RealmModel> copy(model: T?): T? = reader.copy(model)
 
-    override fun <T : RealmModel> copyAll(models: List<T>): List<T> =
+    override fun <T : RealmModel> copyAll(models: List<T>): MutableList<T> =
         reader.copyAll(models)
 
     override fun commitTransaction() {
