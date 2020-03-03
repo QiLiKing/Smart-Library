@@ -18,4 +18,15 @@ object SmartString {
         }
         return result
     }
+
+    /**
+     * if both of them are null, return false
+     */
+    @JvmStatic
+    fun nonnullEquals(left: String?, right: String?): Boolean {
+        if (left == null && right == null) {
+            return false
+        }
+        return left == right
+    }
 }
